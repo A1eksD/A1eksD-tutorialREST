@@ -1,18 +1,16 @@
-
 from django.contrib import admin
 from django.urls import path, include
-from snippets import views
 from rest_framework.routers import DefaultRouter
+from snippets import views
 
-"""
- Add router to see the REST style of obj.-list at browser
-"""
+# Create a router and register our ViewSets with it.
 router = DefaultRouter()
-router.register(r'snippets', views.SnippetList, basename='snippet')
-router.register(r'users', views.UserList, basename='user')
+router.register(r'snippets', views.SnippetViewSet, basename='snippet')
+router.register(r'users', views.UserViewSet, basename='user')
 
+# The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('', include('snippets.urls')),
+    path('', include(router.urls)),
 ]
