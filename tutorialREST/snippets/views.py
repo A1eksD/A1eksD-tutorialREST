@@ -1,63 +1,75 @@
-from django.http import Http404
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from snippets.models import Snippet
-from snippets.serializers import SnippetSerializer, UserSerializer
-from rest_framework.views import APIView
-from rest_framework import generics
-from django.contrib.auth.models import User
-from rest_framework import permissions
-from snippets.permissions import IsOwnerOrReadOnly
-from rest_framework.reverse import reverse
-from rest_framework import renderers
-from rest_framework.decorators import action
-from rest_framework import viewsets
+from django.http import Http404  # Importiert Http404 Ausnahme für Fehlerbehandlung
+from rest_framework import status  # Importiert Statusmodule für HTTP-Antwortcodes
+from rest_framework.decorators import api_view  # Importiert Dekorator für funktionsbasierte Views
+from rest_framework.response import Response  # Importiert Response-Klasse für HTTP-Antworten
+from snippets.models import Snippet  # Importiert das Snippet-Modell
+from snippets.serializers import SnippetSerializer, UserSerializer  # Importiert die Serializer-Klassen
+from rest_framework.views import APIView  # Importiert APIView-Klasse für klassenbasierte Views
+from rest_framework import generics  # Importiert generische Views
+from django.contrib.auth.models import User  # Importiert das User-Modell
+from rest_framework import permissions  # Importiert das Berechtigungsmodul
+from snippets.permissions import IsOwnerOrReadOnly  # Importiert benutzerdefinierte Berechtigungen
+from rest_framework.reverse import reverse  # Importiert reverse-Funktion für URL-Umkehrung
+from rest_framework import renderers  # Importiert Renderer für benutzerdefinierte Darstellungen
+from rest_framework.decorators import action  # Importiert Action-Dekorator für ViewSets
+from rest_framework import viewsets  # Importiert ViewSet-Klassen
 
-
-@api_view(['GET'])
+@api_view(['GET'])  # Dekorator, der diese Funktion als API-View deklariert und nur GET-Anfragen zulässt
 def api_root(request, format=None):
+    """
+    Diese View stellt die Wurzel der API bereit und enthält Links zu den Benutzer- und Snippet-Endpunkten.
+    """
     return Response({
-        'users': reverse('user-list', request=request, format=format),
-        'snippets': reverse('snippet-list', request=request, format=format)
+        'users': reverse('user-list', request=request, format=format),  # Rückgabe des Links zur Benutzerliste
+        'snippets': reverse('snippet-list', request=request, format=format)  # Rückgabe des Links zur Snippet-Liste
     })
     
-class SnippetHighlight(generics.GenericAPIView):
-    queryset = Snippet.objects.all()
-    renderer_classes = [renderers.StaticHTMLRenderer]
+class SnippetHighlight(generics.GenericAPIView):  # Definition einer generischen APIView für Snippet-Highlights
+    """
+    Diese View wird verwendet, um ein Snippet hervorzuheben und es im HTML-Format darzustellen.
+    """
+    queryset = Snippet.objects.all()  # Setzt das Queryset auf alle Snippet-Objekte
+    renderer_classes = [renderers.StaticHTMLRenderer]  # Setzt den Renderer auf StaticHTMLRenderer
 
-    def get(self, request, *args, **kwargs):
-        snippet = self.get_object()
-        return Response(snippet.highlighted)
+    def get(self, request, *args, **kwargs):  # Definiert die GET-Methode
+        snippet = self.get_object()  # Holt das aktuelle Snippet-Objekt
+        return Response(snippet.highlighted)  # Gibt das hervorgehobene Snippet zurück
     
-#---------------------------- Aktuelle version überarbeitet ------------------------------
-class SnippetViewSet(viewsets.ModelViewSet):
+#---------------------------- Aktuelle Version Überarbeitet ------------------------------
+class SnippetViewSet(viewsets.ModelViewSet):  # Definition eines ModelViewSets für Snippets
     """
-    This ViewSet automatically provides `list`, `create`, `retrieve`,
-    `update` and `destroy` actions.
+    Dieses ViewSet stellt automatisch `list`, `create`, `retrieve`,
+    `update` und `destroy` Aktionen bereit.
 
-    Additionally we also provide an extra `highlight` action.
+    Zusätzlich bieten wir eine `highlight` Aktion an.
     """
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    queryset = Snippet.objects.all()  # Setzt das Queryset auf alle Snippet-Objekte
+    serializer_class = SnippetSerializer  # Setzt den Serializer auf SnippetSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,  # Nur authentifizierte Benutzer können Daten ändern
+                          IsOwnerOrReadOnly]  # Benutzer können nur ihre eigenen Snippets ändern
 
-    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])  # Definiert eine benutzerdefinierte Aktion
     def highlight(self, request, *args, **kwargs):
-        snippet = self.get_object()
-        return Response(snippet.highlighted)
+        """
+        Benutzerdefinierte Aktion zum Hervorheben eines Snippets.
+        """
+        snippet = self.get_object()  # Holt das aktuelle Snippet-Objekt
+        return Response(snippet.highlighted)  # Gibt das hervorgehobene Snippet zurück
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    def perform_create(self, serializer):  # Überschreibt die Standarderstellungsfunktion
+        """
+        Überschreibt das Standardverhalten der Erstellung, um das Snippet mit dem aktuellen Benutzer zu verknüpfen.
+        """
+        serializer.save(owner=self.request.user)  # Speichert das Snippet und setzt den Eigentümer auf den aktuellen Benutzer
         
-        
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):  # Definition eines ReadOnlyModelViewSets für Benutzer
     """
-    This viewset automatically provides `list` and `retrieve` actions.
+    Dieses ViewSet stellt automatisch `list` und `retrieve` Aktionen für Benutzer bereit.
     """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+    queryset = User.objects.all()  # Setzt das Queryset auf alle Benutzer
+    serializer_class = UserSerializer  # Setzt den Serializer auf UserSerializer
+
+
 #---------------------------- Aktuelle version ------------------------------
 # class SnippetList(generics.ListCreateAPIView):
 #     permission_classes = [permissions.IsAuthenticatedOrReadOnly,

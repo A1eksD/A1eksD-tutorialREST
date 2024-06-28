@@ -1,50 +1,34 @@
-# from rest_framework import serializers
-# from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
-
-
-# class SnippetSerializer(serializers.Serializer):
-#     class Meta:
-#         model = Snippet
-#         fields = ['id', 'title', 'code', 'linenos', 'language', 'style']
-
-#     def create(self, validated_data):
-#         """
-#         Create and return a new `Snippet` instance, given the validated data.
-#         """
-#         return Snippet.objects.create(**validated_data)
-
-#     def update(self, instance, validated_data):
-#         """
-#         Update and return an existing `Snippet` instance, given the validated data.
-#         """
-#         instance.title = validated_data.get('title', instance.title)
-#         instance.code = validated_data.get('code', instance.code)
-#         instance.linenos = validated_data.get('linenos', instance.linenos)
-#         instance.language = validated_data.get('language', instance.language)
-#         instance.style = validated_data.get('style', instance.style)
-#         instance.save()
-#         return instance
-
-
-
 from rest_framework import serializers
 from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
 from django.contrib.auth.models import User
 
 class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Serializer class for Snippet model.
+    Converts model instances to JSON format and vice versa.
+    """
+    # Read-only field to display the username of the owner of the snippet
     owner = serializers.ReadOnlyField(source='owner.username')
+    # Hyperlinked field to the highlighted version of the snippet
     highlight = serializers.HyperlinkedIdentityField(view_name='snippet-highlight', format='html')
 
     class Meta:
+        # Specify the model to be serialized
         model = Snippet
+        # Specify the fields to be included in the serialization
         fields = ['url', 'id', 'highlight', 'owner',
                   'title', 'code', 'linenos', 'language', 'style']
 
-
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Serializer class for User model.
+    Converts model instances to JSON format and vice versa.
+    """
+    # Hyperlinked field to represent the related snippets of the user
     snippets = serializers.HyperlinkedRelatedField(many=True, view_name='snippet-detail', read_only=True)
 
     class Meta:
+        # Specify the model to be serialized
         model = User
+        # Specify the fields to be included in the serialization
         fields = ['url', 'id', 'username', 'snippets']
-        
